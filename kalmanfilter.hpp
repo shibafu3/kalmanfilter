@@ -1,75 +1,79 @@
 #ifndef KALMAN_FILTER_HPP
 #define KALMAN_FILTER_HPP
 
+#include <iostream>
 #include <Eigen/Core>
+#include <Eigen/LU>
 
 class KalmanFilter {
     double dt;
-    Eigen::Matrix3d A;
-    Eigen::Matrix3d At;
+    Eigen::MatrixXd A;
+    Eigen::MatrixXd At;
 
-    Eigen::Matrix3d B;
-    Eigen::Matrix3d Bt;
+    Eigen::MatrixXd B;
+    Eigen::MatrixXd Bt;
 
     Eigen::MatrixXd C;
-    Eigen::Vector3d Ct;
+    Eigen::MatrixXd Ct;
 
-    Eigen::Matrix3d Q;
-    double R = 1;
+    Eigen::MatrixXd Q;
+    Eigen::MatrixXd R;
 
-    Eigen::Matrix3d I;
+    Eigen::MatrixXd I;
 
-    Eigen::Vector3d x_k1;
-    Eigen::Vector3d x_kk1;
+    Eigen::MatrixXd x_k1;
+    Eigen::MatrixXd x_kk1;
 
-    Eigen::Matrix3d P_k1;
-    Eigen::Matrix3d P_kk1;
+    Eigen::MatrixXd P_k1;
+    Eigen::MatrixXd P_kk1;
 
-    Eigen::Vector3d G;
-    Eigen::Vector3d x_k;
-    Eigen::Matrix3d P_k;
+    Eigen::MatrixXd G;
+    Eigen::MatrixXd x_k;
+    Eigen::MatrixXd P_k;
 public:
     KalmanFilter() {}
     int Init() {
-        I << 1, 0, 0,
-             0, 1, 0,
-             0, 0, 1;
-
         dt = 0.1;
-
-        A << 1, dt, dt*dt/2.0,
-             0,  1,        dt,
-             0,  0,         1;
-        At = A.transpose();
-
-        B << 1, 0, 0,
-             0, 1, 0,
-             0, 0, 1;
-        Bt = B.transpose();
-
-        Ct << 1, 0, 0;
-        C = Ct.transpose();
-
-        Q << 1, 0, 0,
-             0, 1, 0,
-             0, 0, 1;
-
-        R = 20;
-
-        x_k1 << 10, 1, 0;
-        P_k1 << 1, 0, 0,
-                0, 1, 0,
-                0, 0, 1;
         return 0;
     }
-    Eigen::Vector3d Update(double sensor_data, double delta_time) {
-        A << 1, delta_time, delta_time*delta_time/2.0,
-             0,          1,                delta_time,
-             0,          0,                         1;
+    Eigen::MatrixXd SetStateSpaceModelCoefficientMatrix(Eigen::MatrixXd state_space_model_coefficient_matrix) {
+        A = state_space_model_coefficient_matrix;
         At = A.transpose();
+
+        I = Eigen::MatrixXd::Identity(A.rows(), A.cols());
+        return A;
+    }
+    Eigen::MatrixXd SetSystemMatrix(Eigen::MatrixXd system_matrix) {
+        B = system_matrix;
+        Bt = B.transpose();
+        return B;
+    }
+    Eigen::MatrixXd SetSystemNoiseMatrix(Eigen::MatrixXd system_noise_matrix) {
+        Q = system_noise_matrix;
+        Bt = B.transpose();
+        return B;
+    }
+    Eigen::MatrixXd SetObservationMatrix(Eigen::MatrixXd observation_matrix) {
+        C = observation_matrix;
+        Ct = C.transpose();
+        return C;
+    }
+    Eigen::MatrixXd SetObservationNoiseMatrix(Eigen::MatrixXd observation_noise_matrix) {
+        R = observation_noise_matrix;
+        return R;
+    }
+    Eigen::MatrixXd SetInitialStateMatrix(Eigen::MatrixXd initial_state_matrix) {
+        x_k1 = initial_state_matrix;
+        return x_k1;
+    }
+    Eigen::MatrixXd SetInitialKyobunsanMatrix(Eigen::MatrixXd initial_kyobunsan_matrix) {
+        P_k1 = initial_kyobunsan_matrix;
+        return P_k1;
+    }
+    Eigen::Vector3d Update(double sensor_data, double delta_time) {
         x_kk1 = A * x_k1;
         P_kk1 = A * P_k1 * At + B * Q * Bt;
-        G = P_kk1 * Ct / ((C * P_kk1 * Ct)(0, 0) + R);
+        G = P_kk1 * Ct * ((C * P_kk1 * Ct) + R).inverse();
         x_k = x_kk1 + G * (sensor_data - (C * x_kk1)(0, 0));
         P_k = (I - G * C) * P_kk1;
         x_k1 = x_k;
