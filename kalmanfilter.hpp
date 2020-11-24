@@ -50,8 +50,7 @@ public:
     }
     Eigen::MatrixXd SetSystemNoiseMatrix(Eigen::MatrixXd system_noise_matrix) {
         Q = system_noise_matrix;
-        Bt = B.transpose();
-        return B;
+        return Q;
     }
     Eigen::MatrixXd SetObservationMatrix(Eigen::MatrixXd observation_matrix) {
         C = observation_matrix;
@@ -70,11 +69,11 @@ public:
         P_k1 = initial_kyobunsan_matrix;
         return P_k1;
     }
-    Eigen::Vector3d Update(double sensor_data, double delta_time) {
+    Eigen::Vector3d Update(Eigen::MatrixXd sensor_data, double delta_time) {
         x_kk1 = A * x_k1;
         P_kk1 = A * P_k1 * At + B * Q * Bt;
         G = P_kk1 * Ct * ((C * P_kk1 * Ct) + R).inverse();
-        x_k = x_kk1 + G * (sensor_data - (C * x_kk1)(0, 0));
+        x_k = x_kk1 + G * (sensor_data - (C * x_kk1));
         P_k = (I - G * C) * P_kk1;
         x_k1 = x_k;
         P_k1 = P_k;
