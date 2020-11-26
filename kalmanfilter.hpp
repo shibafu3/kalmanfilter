@@ -85,6 +85,9 @@ public:
 };
 
 class ExtendedKalmanFilter {
+public:
+    typedef std::vector<std::function<double(Eigen::MatrixXd)>> FunctionVector;
+private:
     Eigen::MatrixXd A;
     Eigen::MatrixXd At;
 
@@ -109,32 +112,31 @@ class ExtendedKalmanFilter {
     Eigen::MatrixXd x_k;
     Eigen::MatrixXd P_k;
 
-    std::vector<std::function<double(Eigen::MatrixXd)>> f;
-    std::vector<std::function<double(Eigen::MatrixXd)>> h;
-    std::vector<std::function<double(Eigen::MatrixXd)>> df;
-    std::vector<std::function<double(Eigen::MatrixXd)>> dh;
-
+    FunctionVector f;
+    FunctionVector h;
+    FunctionVector df;
+    FunctionVector dh;
 public:
     ExtendedKalmanFilter() {}
     int Init() {
         return 0;
     }
-    std::vector<std::function<double(Eigen::MatrixXd)>> SetStateSpaceModelFunction(std::vector<std::function<double(Eigen::MatrixXd)>> non_liner_state_function) {
+    FunctionVector SetStateSpaceModelFunction(FunctionVector non_liner_state_function) {
         f = non_liner_state_function;
         A.resize(f.size(), f.size());
         I = Eigen::MatrixXd::Identity(A.rows(), A.cols());
         return f;
     }
-    std::vector<std::function<double(Eigen::MatrixXd)>> SetObservationFunction(std::vector<std::function<double(Eigen::MatrixXd)>> non_liner_obsevation_function) {
+    FunctionVector SetObservationFunction(FunctionVector non_liner_obsevation_function) {
         h = non_liner_obsevation_function;
         C.resize(h.size(), h.size());
         return h;
     }
-    std::vector<std::function<double(Eigen::MatrixXd)>> SetStateSpaceModelCoefficientJacobian(std::vector<std::function<double(Eigen::MatrixXd)>> state_space_model_coefficient_jacobian) {
+    FunctionVector SetStateSpaceModelCoefficientJacobian(FunctionVector state_space_model_coefficient_jacobian) {
         df = state_space_model_coefficient_jacobian;
         return df;
     }
-    std::vector<std::function<double(Eigen::MatrixXd)>> SetObservationFunctionJacobian(std::vector<std::function<double(Eigen::MatrixXd)>> obsevation_jacobian) {
+    FunctionVector SetObservationFunctionJacobian(FunctionVector obsevation_jacobian) {
         dh = obsevation_jacobian;
         return dh;
     }
