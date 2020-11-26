@@ -168,6 +168,38 @@ public:
         return P_k1;
     }
     Eigen::MatrixXd Update(Eigen::MatrixXd sensor_data, double delta_time) {
+        if (df.size() != f.size()*x_k1.size()) { std::cout << "f no size attenaiyo!!" << std::endl;}
+        if (dh.size() != h.size()*x_k1.size()) { std::cout << "h no size attenaiyo!!" << std::endl;}
+        if (x_k1.rows() != R.rows()) { std::cout << "R no size attenaiyo!!" << std::endl;}
+
+
+        for (int i = 0; i < f.size(); ++i) {
+            x_kk1(i) = f[i](x_k1);
+        }
+
+        for (int row = 0; row < A.rows(); ++row) {
+            for (int col = 0; col < A.cols(); ++col) {
+                A(row, col) = df[row * A.cols() + col](x_kk1);
+            }
+        }
+        At = A.transpose();
+
+        for (int row = 0; row < C.rows(); ++row) {
+            for (int col = 0; col < C.cols(); ++col) {
+                C(row, col) = dh[row * C.cols() + col](x_kk1);
+            }
+        }
+        Ct = C.transpose();
+
+        P_kk1 = A * P_k1 * At + B * Q * Bt;
+        G = P_kk1 * Ct * ((C * P_kk1 * Ct) + R).inverse();
+        x_k = x_kk1 + G * (sensor_data - (C * x_kk1));
+        P_k = (I - G * C) * P_kk1;
+        x_k1 = x_k;
+        P_k1 = P_k;
+        return x_k1;
+    }
+    void Print() {
         std::cout << "updateing" << std::endl;
         std::cout << "f.size() " << f.size() << std::endl << std::endl;
         std::cout << "h.size() " << h.size() << std::endl << std::endl;
@@ -178,48 +210,17 @@ public:
         std::cout << "Q " << std::endl << Q << std::endl << std::endl;
         std::cout << "R " << std::endl << R << std::endl << std::endl;
         std::cout << "x_k1 " << std::endl << x_k1 << std::endl << std::endl;
-
-        if (df.size() != f.size()*x_k1.size()) { std::cout << "f no size attenaiyo!!" << std::endl;}
-        if (dh.size() != h.size()*x_k1.size()) { std::cout << "h no size attenaiyo!!" << std::endl;}
-        if (x_k1.rows() != R.rows()) { std::cout << "R no size attenaiyo!!" << std::endl;}
-
-
-        for (int i = 0; i < f.size(); ++i) {
-            x_kk1(i) = f[i](x_k1);
-        }
         std::cout << "x_kk1 " << std::endl << x_kk1 << std::endl << std::endl;
-
-        for (int row = 0; row < A.rows(); ++row) {
-            for (int col = 0; col < A.cols(); ++col) {
-                A(row, col) = df[row * A.cols() + col](x_kk1);
-            }
-        }
-        At = A.transpose();
         std::cout << "A " << std::endl << A << std::endl << std::endl;
         std::cout << "At " << std::endl << At << std::endl << std::endl;
-
-        for (int row = 0; row < C.rows(); ++row) {
-            for (int col = 0; col < C.cols(); ++col) {
-                C(row, col) = dh[row * C.cols() + col](x_kk1);
-            }
-        }
-        Ct = C.transpose();
         std::cout << "C " << std::endl << C << std::endl << std::endl;
         std::cout << "Ct " << std::endl << Ct << std::endl << std::endl;
-
         std::cout << "P_k1 " << std::endl << P_k1 << std::endl << std::endl;
-        P_kk1 = A * P_k1 * At + B * Q * Bt;
         std::cout << "P_kk1 " << std::endl << P_kk1 << std::endl << std::endl;
-        G = P_kk1 * Ct * ((C * P_kk1 * Ct) + R).inverse();
         std::cout << "G " << std::endl << G << std::endl << std::endl;
         std::cout << "sensor_data " << std::endl << sensor_data << std::endl << std::endl;
-        x_k = x_kk1 + G * (sensor_data - (C * x_kk1));
         std::cout << "x_k " << std::endl << x_k << std::endl << std::endl;
-        P_k = (I - G * C) * P_kk1;
         std::cout << "P_k " << std::endl << P_k << std::endl << std::endl;
-        x_k1 = x_k;
-        P_k1 = P_k;
-        return x_k1;
     }
 
     auto SetF(FunctionVector non_liner_state_function) {
