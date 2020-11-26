@@ -4,6 +4,9 @@
 #include <iostream>
 #include <Eigen/Core>
 #include <Eigen/LU>
+#include <cmath>
+#include <vector>
+#include <functional>
 
 class KalmanFilter {
     double dt;
@@ -75,6 +78,143 @@ public:
         G = P_kk1 * Ct * ((C * P_kk1 * Ct) + R).inverse();
         x_k = x_kk1 + G * (sensor_data - (C * x_kk1));
         P_k = (I - G * C) * P_kk1;
+        x_k1 = x_k;
+        P_k1 = P_k;
+        return x_k1;
+    }
+};
+
+class ExtendedKalmanFilter {
+    Eigen::MatrixXd A;
+    Eigen::MatrixXd At;
+
+    Eigen::MatrixXd B;
+    Eigen::MatrixXd Bt;
+
+    Eigen::MatrixXd C;
+    Eigen::MatrixXd Ct;
+
+    Eigen::MatrixXd Q;
+    Eigen::MatrixXd R;
+
+    Eigen::MatrixXd I;
+
+    Eigen::MatrixXd x_k1;
+    Eigen::MatrixXd x_kk1;
+
+    Eigen::MatrixXd P_k1;
+    Eigen::MatrixXd P_kk1;
+
+    Eigen::MatrixXd G;
+    Eigen::MatrixXd x_k;
+    Eigen::MatrixXd P_k;
+
+    std::vector<std::function<double(Eigen::MatrixXd)>> f;
+    std::vector<std::function<double(Eigen::MatrixXd)>> h;
+    std::vector<std::function<double(Eigen::MatrixXd)>> df;
+    std::vector<std::function<double(Eigen::MatrixXd)>> dh;
+
+public:
+    ExtendedKalmanFilter() {}
+    int Init() {
+        return 0;
+    }
+    std::vector<std::function<double(Eigen::MatrixXd)>> SetStateSpaceModelFunction(std::vector<std::function<double(Eigen::MatrixXd)>> non_liner_state_function) {
+        f = non_liner_state_function;
+        A.resize(f.size(), f.size());
+        I = Eigen::MatrixXd::Identity(A.rows(), A.cols());
+        return f;
+    }
+    std::vector<std::function<double(Eigen::MatrixXd)>> SetObservationFunction(std::vector<std::function<double(Eigen::MatrixXd)>> non_liner_obsevation_function) {
+        h = non_liner_obsevation_function;
+        C.resize(h.size(), h.size());
+        return h;
+    }
+    std::vector<std::function<double(Eigen::MatrixXd)>> SetStateSpaceModelCoefficientJacobian(std::vector<std::function<double(Eigen::MatrixXd)>> state_space_model_coefficient_jacobian) {
+        df = state_space_model_coefficient_jacobian;
+        return df;
+    }
+    std::vector<std::function<double(Eigen::MatrixXd)>> SetObservationFunctionJacobian(std::vector<std::function<double(Eigen::MatrixXd)>> obsevation_jacobian) {
+        dh = obsevation_jacobian;
+        return dh;
+    }
+    Eigen::MatrixXd SetSystemMatrix(Eigen::MatrixXd system_matrix) {
+        B = system_matrix;
+        Bt = B.transpose();
+        return B;
+    }
+    Eigen::MatrixXd SetSystemNoiseMatrix(Eigen::MatrixXd system_noise_matrix) {
+        Q = system_noise_matrix;
+        return Q;
+    }
+    Eigen::MatrixXd SetObservationJacobian(Eigen::MatrixXd observation_jacobian) {
+        C = observation_jacobian;
+        Ct = C.transpose();
+        return C;
+    }
+    Eigen::MatrixXd SetObservationNoiseMatrix(Eigen::MatrixXd observation_noise_matrix) {
+        R = observation_noise_matrix;
+        return R;
+    }
+    Eigen::MatrixXd SetInitialStateMatrix(Eigen::MatrixXd initial_state_matrix) {
+        x_k1 = initial_state_matrix;
+        x_kk1 = x_k1;
+        return x_k1;
+    }
+    Eigen::MatrixXd SetInitialKyobunsanMatrix(Eigen::MatrixXd initial_kyobunsan_matrix) {
+        P_k1 = initial_kyobunsan_matrix;
+        return P_k1;
+    }
+    Eigen::MatrixXd Update(Eigen::MatrixXd sensor_data, double delta_time) {
+        std::cout << "updateing" << std::endl;
+        std::cout << "f.size() " << f.size() << std::endl << std::endl;
+        std::cout << "h.size() " << h.size() << std::endl << std::endl;
+        std::cout << "df.size() " << df.size() << std::endl << std::endl;
+        std::cout << "dh.size() " << dh.size() << std::endl << std::endl;
+        std::cout << "B " << std::endl << B << std::endl << std::endl;
+        std::cout << "Bt " << std::endl << Bt << std::endl << std::endl;
+        std::cout << "Q " << std::endl << Q << std::endl << std::endl;
+        std::cout << "R " << std::endl << R << std::endl << std::endl;
+        std::cout << "x_k1 " << std::endl << x_k1 << std::endl << std::endl;
+
+        if (df.size() != f.size()*x_k1.size()) { std::cout << "f no size attenaiyo!!" << std::endl;}
+        if (dh.size() != h.size()*x_k1.size()) { std::cout << "h no size attenaiyo!!" << std::endl;}
+        if (x_k1.rows() != R.rows()) { std::cout << "R no size attenaiyo!!" << std::endl;}
+
+
+        for (int i = 0; i < f.size(); ++i) {
+            x_kk1(i) = f[i](x_k1);
+        }
+        std::cout << "x_kk1 " << std::endl << x_kk1 << std::endl << std::endl;
+
+        for (int row = 0; row < A.rows(); ++row) {
+            for (int col = 0; col < A.cols(); ++col) {
+                A(row, col) = df[row * A.cols() + col](x_kk1);
+            }
+        }
+        At = A.transpose();
+        std::cout << "A " << std::endl << A << std::endl << std::endl;
+        std::cout << "At " << std::endl << At << std::endl << std::endl;
+
+        for (int row = 0; row < C.rows(); ++row) {
+            for (int col = 0; col < C.cols(); ++col) {
+                C(row, col) = dh[row * C.cols() + col](x_kk1);
+            }
+        }
+        Ct = C.transpose();
+        std::cout << "C " << std::endl << C << std::endl << std::endl;
+        std::cout << "Ct " << std::endl << Ct << std::endl << std::endl;
+
+        std::cout << "P_k1 " << std::endl << P_k1 << std::endl << std::endl;
+        P_kk1 = A * P_k1 * At + B * Q * Bt;
+        std::cout << "P_kk1 " << std::endl << P_kk1 << std::endl << std::endl;
+        G = P_kk1 * Ct * ((C * P_kk1 * Ct) + R).inverse();
+        std::cout << "G " << std::endl << G << std::endl << std::endl;
+        std::cout << "sensor_data " << std::endl << sensor_data << std::endl << std::endl;
+        x_k = x_kk1 + G * (sensor_data - (C * x_kk1));
+        std::cout << "x_k " << std::endl << x_k << std::endl << std::endl;
+        P_k = (I - G * C) * P_kk1;
+        std::cout << "P_k " << std::endl << P_k << std::endl << std::endl;
         x_k1 = x_k;
         P_k1 = P_k;
         return x_k1;
