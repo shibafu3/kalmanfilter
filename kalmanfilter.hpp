@@ -221,6 +221,37 @@ public:
         P_k1 = P_k;
         return x_k1;
     }
+
+    auto SetF(FunctionVector non_liner_state_function) {
+        return SetStateSpaceModelFunction(non_liner_state_function);
+    }
+    auto SetdF(FunctionVector non_liner_obsevation_function) {
+        return SetObservationFunction(non_liner_obsevation_function);
+    }
+    auto SetH(FunctionVector state_space_model_coefficient_jacobian) {
+        return SetStateSpaceModelCoefficientJacobian(state_space_model_coefficient_jacobian);
+    }
+    auto SetdH(FunctionVector obsevation_jacobian) {
+        return SetObservationFunctionJacobian(obsevation_jacobian);
+    }
+    auto SetB(Eigen::MatrixXd system_matrix) {
+        return SetSystemMatrix(system_matrix);
+    }
+    auto SetQ(Eigen::MatrixXd system_noise_matrix) {
+        return SetSystemNoiseMatrix(system_noise_matrix);
+    }
+    auto SetC(Eigen::MatrixXd observation_jacobian) {
+        return SetObservationJacobian(observation_jacobian);
+    }
+    auto SetR(Eigen::MatrixXd observation_noise_matrix) {
+        return SetObservationNoiseMatrix(observation_noise_matrix);
+    }
+    auto Setx(Eigen::MatrixXd initial_state_matrix) {
+        return SetInitialStateMatrix(initial_state_matrix);
+    }
+    auto SetP(Eigen::MatrixXd initial_kyobunsan_matrix) {
+        return SetInitialKyobunsanMatrix(initial_kyobunsan_matrix);
+    }
 };
 
 #endif
