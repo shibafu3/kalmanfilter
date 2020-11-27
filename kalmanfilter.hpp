@@ -9,7 +9,6 @@
 #include <functional>
 
 class KalmanFilter {
-    double dt;
     Eigen::MatrixXd A;
     Eigen::MatrixXd At;
 
@@ -35,10 +34,6 @@ class KalmanFilter {
     Eigen::MatrixXd P_k;
 public:
     KalmanFilter() {}
-    int Init() {
-        dt = 0.1;
-        return 0;
-    }
     Eigen::MatrixXd SetStateSpaceModelCoefficientMatrix(Eigen::MatrixXd state_space_model_coefficient_matrix) {
         A = state_space_model_coefficient_matrix;
         At = A.transpose();
@@ -118,9 +113,6 @@ private:
     FunctionVector dh;
 public:
     ExtendedKalmanFilter() {}
-    int Init() {
-        return 0;
-    }
     FunctionVector SetStateSpaceModelFunction(FunctionVector non_liner_state_function) {
         f = non_liner_state_function;
         A.resize(f.size(), f.size());
@@ -167,8 +159,7 @@ public:
         P_k1 = initial_kyobunsan_matrix;
         return P_k1;
     }
-    Eigen::MatrixXd Update(Eigen::MatrixXd sensor_data, double delta_time) {
-        if (df.size() != f.size()*x_k1.size()) { std::cout << "f no size attenaiyo!!" << std::endl;}
+    Eigen::MatrixXd Update(Eigen::MatrixXd sensor_data) {
         if (dh.size() != h.size()*x_k1.size()) { std::cout << "h no size attenaiyo!!" << std::endl;}
         if (x_k1.rows() != R.rows()) { std::cout << "R no size attenaiyo!!" << std::endl;}
 
