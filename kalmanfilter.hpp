@@ -184,13 +184,13 @@ public:
         P_k1 = initial_kyobunsan_matrix;
         return P_k1;
     }
-    Eigen::MatrixXd Update(Eigen::MatrixXd sensor_data) {
+    Eigen::MatrixXd Update(Eigen::MatrixXd obsevation_data) {
         Calcx_kk1();
         CalcA();
         CalcC();
         P_kk1 = A * P_k1 * At + B * Q * Bt;
         G = P_kk1 * Ct * ((C * P_kk1 * Ct) + R).inverse();
-        x_k = x_kk1 + G * (sensor_data - (C * x_kk1));
+        x_k = x_kk1 + G * (obsevation_data - (C * x_kk1));
         P_k = (I - G * C) * P_kk1;
         x_k1 = x_k;
         P_k1 = P_k;
@@ -215,21 +215,20 @@ public:
         std::cout << "P_k1 " << std::endl << P_k1 << std::endl << std::endl;
         std::cout << "P_kk1 " << std::endl << P_kk1 << std::endl << std::endl;
         std::cout << "G " << std::endl << G << std::endl << std::endl;
-        std::cout << "sensor_data " << std::endl << sensor_data << std::endl << std::endl;
         std::cout << "x_k " << std::endl << x_k << std::endl << std::endl;
         std::cout << "P_k " << std::endl << P_k << std::endl << std::endl;
     }
 
-    auto SetF(FunctionVector non_liner_state_function) {
+    auto Setf(FunctionVector non_liner_state_function) {
         return SetStateSpaceModelFunction(non_liner_state_function);
     }
-    auto SetdF(FunctionVector non_liner_obsevation_function) {
+    auto Setdf(FunctionVector non_liner_obsevation_function) {
         return SetObservationFunction(non_liner_obsevation_function);
     }
-    auto SetH(FunctionVector state_space_model_coefficient_jacobian) {
+    auto Seth(FunctionVector state_space_model_coefficient_jacobian) {
         return SetStateSpaceModelCoefficientJacobian(state_space_model_coefficient_jacobian);
     }
-    auto SetdH(FunctionVector obsevation_jacobian) {
+    auto Setdh(FunctionVector obsevation_jacobian) {
         return SetObservationFunctionJacobian(obsevation_jacobian);
     }
     auto SetB(Eigen::MatrixXd system_matrix) {
