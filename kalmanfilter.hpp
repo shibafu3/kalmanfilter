@@ -111,6 +111,31 @@ private:
     FunctionVector h;
     FunctionVector df;
     FunctionVector dh;
+
+    Eigen::MatrixXd Calcx_kk1() {
+        for (int i = 0; i < f.size(); ++i) {
+            x_kk1(i) = f[i](x_k1);
+        }
+        return x_kk1;
+    }
+    Eigen::MatrixXd CalcA() {
+        for (int row = 0; row < A.rows(); ++row) {
+            for (int col = 0; col < A.cols(); ++col) {
+                A(row, col) = df[row * A.cols() + col](x_kk1);
+            }
+        }
+        At = A.transpose();
+        return A;
+    }
+    Eigen::MatrixXd CalcC() {
+        for (int row = 0; row < C.rows(); ++row) {
+            for (int col = 0; col < C.cols(); ++col) {
+                C(row, col) = dh[row * C.cols() + col](x_kk1);
+            }
+        }
+        Ct = C.transpose();
+        return C;
+    }
 public:
     ExtendedKalmanFilter() {}
     FunctionVector SetStateSpaceModelFunction(FunctionVector non_liner_state_function) {
@@ -160,28 +185,9 @@ public:
         return P_k1;
     }
     Eigen::MatrixXd Update(Eigen::MatrixXd sensor_data) {
-        if (dh.size() != h.size()*x_k1.size()) { std::cout << "h no size attenaiyo!!" << std::endl;}
-        if (x_k1.rows() != R.rows()) { std::cout << "R no size attenaiyo!!" << std::endl;}
-
-
-        for (int i = 0; i < f.size(); ++i) {
-            x_kk1(i) = f[i](x_k1);
-        }
-
-        for (int row = 0; row < A.rows(); ++row) {
-            for (int col = 0; col < A.cols(); ++col) {
-                A(row, col) = df[row * A.cols() + col](x_kk1);
-            }
-        }
-        At = A.transpose();
-
-        for (int row = 0; row < C.rows(); ++row) {
-            for (int col = 0; col < C.cols(); ++col) {
-                C(row, col) = dh[row * C.cols() + col](x_kk1);
-            }
-        }
-        Ct = C.transpose();
-
+        Calcx_kk1();
+        CalcA();
+        CalcC();
         P_kk1 = A * P_k1 * At + B * Q * Bt;
         G = P_kk1 * Ct * ((C * P_kk1 * Ct) + R).inverse();
         x_k = x_kk1 + G * (sensor_data - (C * x_kk1));
