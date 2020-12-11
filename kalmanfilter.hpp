@@ -4,6 +4,7 @@
 #include <iostream>
 #include <Eigen/Core>
 #include <Eigen/LU>
+#include <Eigen/Cholesky>
 #include <cmath>
 #include <vector>
 #include <functional>
@@ -357,6 +358,43 @@ public:
     Eigen::MatrixXd SetInitialKyobunsanMatrix(Eigen::MatrixXd initial_kyobunsan_matrix) {
         P_k1 = initial_kyobunsan_matrix;
         return P_k1;
+    }
+    Eigen::MatrixXd GetSigmaPoint(unsigned char k){
+        Eigen::MatrixXd ave = x_k1;
+        Eigen::MatrixXd avey = x_k1;
+        Eigen::MatrixXd Py = P_k1;
+        Eigen::MatrixXd rootP = P_k1.llt().matrixL(); 
+        unsigned char n = x_k1.size();
+        std::vector<Eigen::MatrixXd> X(2*n + 1);
+        std::vector<double> w(2*n + 1);
+        std::vector<Eigen::MatrixXd> Y(2*n + 1);
+
+        X[0] = ave;
+        for (unsigned char i = 1; i < n+1; ++i) {
+            X[i] = ave + std::sqrt(n + k) * rootP.col(i-1);
+            X[n + i] =  ave + std::sqrt(n + k) * rootP.col(i-1);
+        }
+        w[0] = k / (n + k);
+        for (unsigned char i = 1; i < n+1; ++i) {
+            w[i] = 1.0 / (2.0*(n + k));
+        }
+
+        for (int i = 0; i < X.size(); ++i) {
+            Y[i] = X[i];
+        }
+        for (int j = 0; j < 2*n+1; ++j) {
+            for (int i = 0; i < f.size(); ++i) {
+                Y[j](i) = f[i](X[j]);
+            }
+        }
+
+        for (unsigned int i = 0; i < 2*n+1; ++i) {
+            avey += w[i] * Y[i];
+        }
+        for (unsigned int i = 0; i < 2*n+1; ++i) {
+            Py += w[i] * (Y[i] - avey) * (Y[i] - avey).transpose();
+        }
+        return Py;
     }
     Eigen::MatrixXd Update(Eigen::MatrixXd obsevation_data) {
         Calcx_kk1();
