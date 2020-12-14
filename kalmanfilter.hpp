@@ -273,6 +273,7 @@ private:
     Eigen::MatrixXd I;
 
     unsigned char n;
+    double k;
     Eigen::MatrixXd x_k1;
     Eigen::MatrixXd x_kk1;
 
@@ -393,6 +394,10 @@ private:
     }
 public:
     UnscentedKalmanFilter() {}
+    FunctionVector Setk(double scaling_parameter) {
+        k = scaling_parameter;
+        return k;
+    }
     FunctionVector SetStateSpaceModelFunction(FunctionVector non_liner_state_function) {
         f = non_liner_state_function;
         A.resize(f.size(), f.size());
