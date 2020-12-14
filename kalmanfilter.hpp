@@ -147,7 +147,7 @@ public:
     }
     FunctionVector SetObservationFunction(FunctionVector non_liner_obsevation_function) {
         h = non_liner_obsevation_function;
-        C.resize(h.size(), h.size());
+        C.resize(h.size(), f.size());
         return h;
     }
     FunctionVector SetStateSpaceModelCoefficientJacobian(FunctionVector state_space_model_coefficient_jacobian) {
@@ -407,7 +407,7 @@ public:
     }
     FunctionVector SetObservationFunction(FunctionVector non_liner_obsevation_function) {
         h = non_liner_obsevation_function;
-        C.resize(h.size(), h.size());
+        C.resize(h.size(), f.size());
         return h;
     }
     FunctionVector SetStateSpaceModelCoefficientJacobian(FunctionVector state_space_model_coefficient_jacobian) {
