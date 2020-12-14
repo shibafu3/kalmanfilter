@@ -272,6 +272,7 @@ private:
 
     Eigen::MatrixXd I;
 
+    unsigned char n;
     Eigen::MatrixXd x_k1;
     Eigen::MatrixXd x_kk1;
 
@@ -396,6 +397,7 @@ public:
         f = non_liner_state_function;
         A.resize(f.size(), f.size());
         I = Eigen::MatrixXd::Identity(A.rows(), A.cols());
+        n = f.size();
         return f;
     }
     FunctionVector SetObservationFunction(FunctionVector non_liner_obsevation_function) {
