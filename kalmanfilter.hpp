@@ -376,6 +376,13 @@ private:
         }
         return Y;
     }
+    Eigen::MatrixXd GetTransformedAverage(std::vector<double>weights, std::vector<Eigen::MatrixXd> transformed_sigmapoints) {
+        Eigen::MatrixXd average;
+        for (size_t i = 0; i < 2*n+1; ++i) {
+            average += weights[i] * transformed_sigmapoints[i];
+        }
+        return average;
+    }
 public:
     UnscentedKalmanFilter() {}
     FunctionVector SetStateSpaceModelFunction(FunctionVector non_liner_state_function) {
