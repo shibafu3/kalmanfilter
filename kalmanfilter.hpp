@@ -343,6 +343,17 @@ private:
         }
         return y;
     }
+    std::vector<Eigen::MatrixXd> GetSigmaPoints(Eigen::MatrixXd x, Eigen::MatrixXd P, double k) {
+        std::vector<Eigen::MatrixXd> X(2*n + 1);
+        Eigen::MatrixXd sqrtP = P.llt().matrixL();
+
+        X[0] = x;
+        for (size_t i = 1; i < n+1; ++i) {
+            X[i]     = X[0] + std::sqrt(n + k) * sqrtP.col(i-1);
+            X[n + i] = X[0] - std::sqrt(n + k) * sqrtP.col(i-1);
+        }
+        return X;
+    }
 public:
     UnscentedKalmanFilter() {}
     FunctionVector SetStateSpaceModelFunction(FunctionVector non_liner_state_function) {
