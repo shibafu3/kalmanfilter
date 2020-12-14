@@ -383,6 +383,13 @@ private:
         }
         return average;
     }
+    Eigen::MatrixXd GetTransformedVarianceCovarianceMatrix(std::vector<double>weights, std::vector<Eigen::MatrixXd> transformed_sigmapoints_1, Eigen::MatrixXd transformed_average_1, std::vector<Eigen::MatrixXd> transformed_sigmapoints_2, Eigen::MatrixXd transformed_average_2) {
+        Eigen::MatrixXd P;
+        for (size_t i = 0; i < 2*n+1; ++i) {
+            P += weights[i] * (transformed_sigmapoints_1[i] - transformed_average_1) * (transformed_sigmapoints_2[i] - transformed_average_2).transpose();
+        }
+        return P;
+    }
 public:
     UnscentedKalmanFilter() {}
     FunctionVector SetStateSpaceModelFunction(FunctionVector non_liner_state_function) {
