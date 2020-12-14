@@ -445,54 +445,27 @@ public:
         P_k1 = initial_kyobunsan_matrix;
         return P_k1;
     }
-    Eigen::MatrixXd GetSigmaPoint(unsigned char k){
-        Eigen::MatrixXd ave = x_k1;
-        Eigen::MatrixXd avey = x_k1;
-        Eigen::MatrixXd Py = P_k1;
-        Eigen::MatrixXd rootP = P_k1.llt().matrixL(); 
-        unsigned char n = x_k1.size();
-        std::vector<Eigen::MatrixXd> X(2*n + 1);
-        std::vector<double> w(2*n + 1);
-        std::vector<Eigen::MatrixXd> Y(2*n + 1);
+    Eigen::MatrixXd Update(Eigen::MatrixXd obsevation_data){
+        auto X = GetSigmaPoints(x_k1, P_k1, k);
+        auto w = GetWeights(k);
 
-        X[0] = ave;
-        for (unsigned char i = 1; i < n+1; ++i) {
-            X[i] = ave + std::sqrt(n + k) * rootP.col(i-1);
-            X[n + i] =  ave + std::sqrt(n + k) * rootP.col(i-1);
-        }
-        w[0] = k / (n + k);
-        for (unsigned char i = 1; i < n+1; ++i) {
-            w[i] = 1.0 / (2.0*(n + k));
-        }
+        auto X_ = TransformSigmaPointsF(X);
+        x_kk1 = GetTransformedAverage(w, X_);
+        P_kk1 = GetTransformedVarianceCovarianceMatrix(w, X_, x_kk1, X_, x_kk1) + B * Q * Bt;
 
-        for (int i = 0; i < X.size(); ++i) {
-            Y[i] = X[i];
-        }
-        for (int j = 0; j < 2*n+1; ++j) {
-            for (int i = 0; i < f.size(); ++i) {
-                Y[j](i) = f[i](X[j]);
-            }
-        }
+        X_ = GetSigmaPoints(x_kk1, P_kk1, k);
+        auto Y_ = TransformSigmaPointsH(X_);
+        auto y_ = GetTransformedAverage(w, Y_);
+        auto Pyy_ = GetTransformedVarianceCovarianceMatrix(w, Y_, y_, Y_, y_);
+        auto Pxy_ = GetTransformedVarianceCovarianceMatrix(w, X_, x_kk1, Y_, y_);
 
-        for (unsigned int i = 0; i < 2*n+1; ++i) {
-            avey += w[i] * Y[i];
-        }
-        for (unsigned int i = 0; i < 2*n+1; ++i) {
-            Py += w[i] * (Y[i] - avey) * (Y[i] - avey).transpose();
-        }
-        return Py;
-    }
-    Eigen::MatrixXd Update(Eigen::MatrixXd obsevation_data) {
-        Calcx_kk1();
-        CalcA();
-        CalcC();
-        P_kk1 = A * P_k1 * At + B * Q * Bt;
-        G = P_kk1 * Ct * ((C * P_kk1 * Ct) + R).inverse();
-        x_k = x_kk1 + G * (obsevation_data - (C * x_kk1));
-        P_k = (I - G * C) * P_kk1;
+        auto g = Pxy_ * (Pyy_ + R).inverse();
+        x_k = x_kk1 + g * (obsevation_data - y_);
+        P_k = P_kk1 - g * Pxy_.transpose();
         x_k1 = x_k;
         P_k1 = P_k;
-        return x_k1;
+
+        return x_k;
     }
     void Print() {
         std::cout << "updateing" << std::endl;
