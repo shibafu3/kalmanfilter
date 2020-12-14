@@ -362,6 +362,13 @@ private:
         }
         return w;
     }
+    std::vector<Eigen::MatrixXd> TransformSigmaPointsF(std::vector<Eigen::MatrixXd> X) {
+        std::vector<Eigen::MatrixXd> Y(X.size());
+        for (size_t i = 0; i < X.size(); ++i) {
+            Y[i] = F(X[i]);
+        }
+        return Y;
+    }
 public:
     UnscentedKalmanFilter() {}
     FunctionVector SetStateSpaceModelFunction(FunctionVector non_liner_state_function) {
