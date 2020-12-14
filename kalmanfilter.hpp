@@ -377,14 +377,14 @@ private:
         return Y;
     }
     Eigen::MatrixXd GetTransformedAverage(std::vector<double>weights, std::vector<Eigen::MatrixXd> transformed_sigmapoints) {
-        Eigen::MatrixXd average;
+        Eigen::MatrixXd average = Eigen::MatrixXd::Zero(transformed_sigmapoints[0].rows(), transformed_sigmapoints[0].cols());
         for (size_t i = 0; i < 2*n+1; ++i) {
             average += weights[i] * transformed_sigmapoints[i];
         }
         return average;
     }
     Eigen::MatrixXd GetTransformedVarianceCovarianceMatrix(std::vector<double>weights, std::vector<Eigen::MatrixXd> transformed_sigmapoints_1, Eigen::MatrixXd transformed_average_1, std::vector<Eigen::MatrixXd> transformed_sigmapoints_2, Eigen::MatrixXd transformed_average_2) {
-        Eigen::MatrixXd P;
+        Eigen::MatrixXd P = Eigen::MatrixXd::Zero(transformed_sigmapoints_1[0].rows(), transformed_sigmapoints_1[0].cols());
         for (size_t i = 0; i < 2*n+1; ++i) {
             P += weights[i] * (transformed_sigmapoints_1[i] - transformed_average_1) * (transformed_sigmapoints_2[i] - transformed_average_2).transpose();
         }
