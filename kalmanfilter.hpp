@@ -394,7 +394,7 @@ private:
     }
 public:
     UnscentedKalmanFilter() {}
-    FunctionVector Setk(double scaling_parameter) {
+    double Setk(double scaling_parameter) {
         k = scaling_parameter;
         return k;
     }
