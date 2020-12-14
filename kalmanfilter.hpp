@@ -311,6 +311,38 @@ private:
         Ct = C.transpose();
         return C;
     }
+    Eigen::MatrixXd F(Eigen::MatrixXd x) {
+        Eigen::MatrixXd y = Eigen::MatrixXd::Zero(x.rows(), x.cols());
+        for (size_t i = 0; i < f.size(); ++i) {
+            y(i) = f[i](x);
+        }
+        return y;
+    }
+    Eigen::MatrixXd dF(Eigen::MatrixXd x) {
+        Eigen::MatrixXd y = Eigen::MatrixXd::Zero(A.rows(), A.cols());
+        for (size_t row = 0; row < y.rows(); ++row) {
+            for (size_t col = 0; col < y.cols(); ++col) {
+                y(row, col) = df[row * y.cols() + col](x);
+            }
+        }
+        return y;
+    }
+    Eigen::MatrixXd H(Eigen::MatrixXd x) {
+        Eigen::MatrixXd y = Eigen::MatrixXd::Zero(h.size(), 1);
+        for (size_t i = 0; i < f.size(); ++i) {
+            y(i) = h[i](x);
+        }
+        return y;
+    }
+    Eigen::MatrixXd dH(Eigen::MatrixXd x) {
+        Eigen::MatrixXd y = Eigen::MatrixXd::Zero(C.rows(), C.cols());
+        for (size_t row = 0; row < y.rows(); ++row) {
+            for (size_t col = 0; col < y.cols(); ++col) {
+                y(row, col) = dh[row * y.cols() + col](x);
+            }
+        }
+        return y;
+    }
 public:
     UnscentedKalmanFilter() {}
     FunctionVector SetStateSpaceModelFunction(FunctionVector non_liner_state_function) {
