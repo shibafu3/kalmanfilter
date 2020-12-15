@@ -359,7 +359,7 @@ private:
     std::vector<double> GetWeights(double k) {
         std::vector<double> w(2*n + 1);
         w[0] = k / (n + k);
-        for (size_t i = 1; i < n+1; ++i) {
+        for (size_t i = 1; i < 2*n+1; ++i) {
             w[i] = 1.0 / (2.0*(n + k));
         }
         return w;
