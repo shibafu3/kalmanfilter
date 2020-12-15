@@ -331,7 +331,7 @@ private:
     }
     Eigen::MatrixXd H(Eigen::MatrixXd x) {
         Eigen::MatrixXd y = Eigen::MatrixXd::Zero(h.size(), 1);
-        for (size_t i = 0; i < f.size(); ++i) {
+        for (size_t i = 0; i < h.size(); ++i) {
             y(i) = h[i](x);
         }
         return y;
