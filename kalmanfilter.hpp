@@ -68,14 +68,28 @@ public:
         P_k1 = initial_kyobunsan_matrix;
         return P_k1;
     }
-    Eigen::Vector3d Update(Eigen::MatrixXd sensor_data, double delta_time) {
+    Eigen::Vector3d PredictStep() {
         x_kk1 = A * x_k1;
         P_kk1 = A * P_k1 * At + B * Q * Bt;
+
+        P_k1 = P_kk1;
+        x_k1 = x_kk1;
+
+        return x_k1;
+    }
+    Eigen::Vector3d FilteringStep(Eigen::MatrixXd obsevation_data) {
         G = P_kk1 * Ct * ((C * P_kk1 * Ct) + R).inverse();
-        x_k = x_kk1 + G * (sensor_data - (C * x_kk1));
+        x_k = x_kk1 + G * (obsevation_data - (C * x_kk1));
         P_k = (I - G * C) * P_kk1;
+
         x_k1 = x_k;
         P_k1 = P_k;
+
+        return x_k1;
+    }
+    Eigen::Vector3d Update(Eigen::MatrixXd obsevation_data) {
+        PredictStep();
+        FilteringStep(obsevation_data);
         return x_k1;
     }
 };
@@ -185,16 +199,30 @@ public:
         P_k1 = initial_kyobunsan_matrix;
         return P_k1;
     }
-    Eigen::MatrixXd Update(Eigen::MatrixXd obsevation_data) {
+    Eigen::MatrixXd PredictStep() {
         Calcx_kk1();
         CalcA();
         CalcC();
         P_kk1 = A * P_k1 * At + B * Q * Bt;
+
+        x_k1 = x_kk1;
+        P_k1 = P_kk1;
+
+        return x_k1;
+    }
+    Eigen::MatrixXd FilteringStep(Eigen::MatrixXd obsevation_data) {
         G = P_kk1 * Ct * ((C * P_kk1 * Ct) + R).inverse();
         x_k = x_kk1 + G * (obsevation_data - (C * x_kk1));
         P_k = (I - G * C) * P_kk1;
+
         x_k1 = x_k;
         P_k1 = P_k;
+
+        return x_k1;
+    }
+    Eigen::MatrixXd Update(Eigen::MatrixXd obsevation_data) {
+        PredictStep();
+        FilteringStep(obsevation_data);
         return x_k1;
     }
     void Print() {
@@ -320,28 +348,10 @@ private:
         }
         return y;
     }
-    Eigen::MatrixXd dF(Eigen::MatrixXd x) {
-        Eigen::MatrixXd y = Eigen::MatrixXd::Zero(A.rows(), A.cols());
-        for (size_t row = 0; row < y.rows(); ++row) {
-            for (size_t col = 0; col < y.cols(); ++col) {
-                y(row, col) = df[row * y.cols() + col](x);
-            }
-        }
-        return y;
-    }
     Eigen::MatrixXd H(Eigen::MatrixXd x) {
         Eigen::MatrixXd y = Eigen::MatrixXd::Zero(h.size(), 1);
         for (size_t i = 0; i < h.size(); ++i) {
             y(i) = h[i](x);
-        }
-        return y;
-    }
-    Eigen::MatrixXd dH(Eigen::MatrixXd x) {
-        Eigen::MatrixXd y = Eigen::MatrixXd::Zero(C.rows(), C.cols());
-        for (size_t row = 0; row < y.rows(); ++row) {
-            for (size_t col = 0; col < y.cols(); ++col) {
-                y(row, col) = dh[row * y.cols() + col](x);
-            }
         }
         return y;
     }

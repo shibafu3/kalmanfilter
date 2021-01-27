@@ -68,7 +68,7 @@ int main() {
         fprintf(gplot,"e\n");
         for (int i = 0; i < sample_nums; ++i) {
             data << noizu[i];
-            fprintf(gplot,"%d\t%f\n", i, kf.Update(data, 0.1)(0, 0));
+            fprintf(gplot,"%d\t%f\n", i, kf.Update(data)(0, 0));
         }
         fprintf(gplot,"e\n");
         fflush(gplot);
