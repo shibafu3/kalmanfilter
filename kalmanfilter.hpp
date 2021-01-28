@@ -35,6 +35,24 @@ class KalmanFilter {
     Eigen::MatrixXd P_k;
 public:
     KalmanFilter() {}
+    KalmanFilter(const KalmanFilter &obj) {
+        A     = obj.A;
+        At    = obj.At;
+        B     = obj.B;
+        Bt    = obj.Bt;
+        C     = obj.C;
+        Ct    = obj.Ct;
+        Q     = obj.Q;
+        R     = obj.R;
+        I     = obj.I;
+        x_k1  = obj.x_k1;
+        x_kk1 = obj.x_kk1;
+        P_k1  = obj.P_k1;
+        P_kk1 = obj.P_kk1;
+        G     = obj.G;
+        x_k   = obj.x_k;
+        P_k   = obj.P_k;
+    }
     Eigen::MatrixXd SetStateSpaceModelCoefficientMatrix(Eigen::MatrixXd state_space_model_coefficient_matrix) {
         A = state_space_model_coefficient_matrix;
         At = A.transpose();
@@ -153,6 +171,28 @@ private:
     }
 public:
     ExtendedKalmanFilter() {}
+    ExtendedKalmanFilter(const ExtendedKalmanFilter &obj) {
+        A     = obj.A;
+        At    = obj.At;
+        B     = obj.B;
+        Bt    = obj.Bt;
+        C     = obj.C;
+        Ct    = obj.Ct;
+        Q     = obj.Q;
+        R     = obj.R;
+        I     = obj.I;
+        x_k1  = obj.x_k1;
+        x_kk1 = obj.x_kk1;
+        P_k1  = obj.P_k1;
+        P_kk1 = obj.P_kk1;
+        G     = obj.G;
+        x_k   = obj.x_k;
+        P_k   = obj.P_k;
+        f     = obj.f;
+        h     = obj.h;
+        df    = obj.df;
+        dh    = obj.dh;
+    }
     FunctionVector SetStateSpaceModelFunction(FunctionVector non_liner_state_function) {
         f = non_liner_state_function;
         A.resize(f.size(), f.size());
@@ -404,6 +444,30 @@ private:
     }
 public:
     UnscentedKalmanFilter() {}
+    UnscentedKalmanFilter(const UnscentedKalmanFilter &obj) {
+        A     = obj.A;
+        At    = obj.At;
+        B     = obj.B;
+        Bt    = obj.Bt;
+        C     = obj.C;
+        Ct    = obj.Ct;
+        Q     = obj.Q;
+        R     = obj.R;
+        I     = obj.I;
+        n     = obj.n;
+        k     = obj.k;
+        x_k1  = obj.x_k1;
+        x_kk1 = obj.x_kk1;
+        P_k1  = obj.P_k1;
+        P_kk1 = obj.P_kk1;
+        G     = obj.G;
+        x_k   = obj.x_k;
+        P_k   = obj.P_k;
+        f     = obj.f;
+        h     = obj.h;
+        df    = obj.df;
+        dh    = obj.dh;
+    }
     double Setk(double scaling_parameter) {
         k = scaling_parameter;
         return k;
