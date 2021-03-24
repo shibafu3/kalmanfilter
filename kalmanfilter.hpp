@@ -145,6 +145,20 @@ private:
     FunctionVector df;
     FunctionVector dh;
 
+    Eigen::MatrixXd F(Eigen::MatrixXd x) {
+        Eigen::MatrixXd y = Eigen::MatrixXd::Zero(x.rows(), x.cols());
+        for (size_t i = 0; i < f.size(); ++i) {
+            y(i) = f[i](x);
+        }
+        return y;
+    }
+    Eigen::MatrixXd H(Eigen::MatrixXd x) {
+        Eigen::MatrixXd y = Eigen::MatrixXd::Zero(h.size(), 1);
+        for (size_t i = 0; i < h.size(); ++i) {
+            y(i) = h[i](x);
+        }
+        return y;
+    }
     Eigen::MatrixXd Calcx_kk1() {
         for (int i = 0; i < f.size(); ++i) {
             x_kk1(i) = f[i](x_k1);
@@ -252,7 +266,7 @@ public:
     }
     Eigen::MatrixXd FilteringStep(Eigen::MatrixXd obsevation_data) {
         G = P_kk1 * Ct * ((C * P_kk1 * Ct) + R).inverse();
-        x_k = x_kk1 + G * (obsevation_data - (C * x_kk1));
+        x_k = x_kk1 + G * (obsevation_data - H(x_kk1));
         P_k = (I - G * C) * P_kk1;
 
         x_k1 = x_k;
