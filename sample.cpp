@@ -75,6 +75,185 @@ int main() {
         pclose(gplot);
     }
 
+    // MTALAB例題コードと同じ例題
+    {
+        ExtendedKalmanFilter ekf;
+
+        std::vector<std::function<double(Eigen::MatrixXd)>> f(1);
+        f[0] = [](Eigen::MatrixXd x) -> double { return  x(0) + 3.0*cos(x(0)/10.0); };
+        ExtendedKalmanFilter::FunctionVector df(1);
+        df[0] = [](Eigen::MatrixXd x) -> double { return 1 - 3.0/10.0*sin(x(0)/10.0); };
+        ExtendedKalmanFilter::FunctionVector h(1);
+        h[0] = [](Eigen::MatrixXd x) -> double { return x(0)*x(0)*x(0); };
+        ExtendedKalmanFilter::FunctionVector dh(1);
+        dh[0] = [](Eigen::MatrixXd x) -> double { return 3.0*x(0)*x(0); };
+
+        // サンプル数
+        double N = 50;
+
+        Eigen::Matrix<double, 1, 1> B;
+        B << 1.0;
+        Eigen::Matrix<double, 1, 1> Q;
+        Q << 1.0;
+        Eigen::Matrix<double, 1, 1> R;
+        R << 100.0;
+        Eigen::Matrix<double, 1, 1> P;
+        P << 1;
+
+        // システムノイズ
+        vector<double> v;
+        {
+            v.push_back(0.5377);
+            v.push_back(1.8339);
+            v.push_back(-2.2588);
+            v.push_back(0.8622);
+            v.push_back(0.3188);
+            v.push_back(-1.3077);
+            v.push_back(-0.4336);
+            v.push_back(0.3426);
+            v.push_back(3.5784);
+            v.push_back(2.7694);
+            v.push_back(-1.3499);
+            v.push_back(3.0349);
+            v.push_back(0.7254);
+            v.push_back(-0.0631);
+            v.push_back(0.7147);
+            v.push_back(-0.2050);
+            v.push_back(-0.1241);
+            v.push_back(1.4897);
+            v.push_back(1.4090);
+            v.push_back(1.4172);
+            v.push_back(0.6715);
+            v.push_back(-1.2075);
+            v.push_back(0.7172);
+            v.push_back(1.6302);
+            v.push_back(0.4889);
+            v.push_back(1.0347);
+            v.push_back(0.7269);
+            v.push_back(-0.3034);
+            v.push_back(0.2939);
+            v.push_back(-0.7873);
+            v.push_back(0.8884);
+            v.push_back(-1.1471);
+            v.push_back(-1.0689);
+            v.push_back(-0.8095);
+            v.push_back(-2.9443);
+            v.push_back(1.4384);
+            v.push_back(0.3252);
+            v.push_back(-0.7549);
+            v.push_back(1.3703);
+            v.push_back(-1.7115);
+            v.push_back(-0.1022);
+            v.push_back(-0.2414);
+            v.push_back(0.3192);
+            v.push_back(0.3129);
+            v.push_back(-0.8649);
+            v.push_back(-0.0301);
+            v.push_back(-0.1649);
+            v.push_back(0.6277);
+            v.push_back(1.0933);
+            v.push_back(1.1093);
+        }
+        // 観測ノイズ
+        vector<double> w;
+        {
+            w.push_back(-8.6365);
+            w.push_back(0.7736);
+            w.push_back(-12.1412);
+            w.push_back(-11.1350);
+            w.push_back(-0.0685);
+            w.push_back(15.3263);
+            w.push_back(-7.6967);
+            w.push_back(3.7138);
+            w.push_back(-2.2558);
+            w.push_back(11.1736);
+            w.push_back(-10.8906);
+            w.push_back(0.3256);
+            w.push_back(5.5253);
+            w.push_back(11.0061);
+            w.push_back(15.4421);
+            w.push_back(0.8593);
+            w.push_back(-14.9159);
+            w.push_back(-7.4230);
+            w.push_back(-10.6158);
+            w.push_back(23.5046);
+            w.push_back(-6.1560);
+            w.push_back(7.4808);
+            w.push_back(-1.9242);
+            w.push_back(8.8861);
+            w.push_back(-7.6485);
+            w.push_back(-14.0227);
+            w.push_back(-14.2238);
+            w.push_back(4.8819);
+            w.push_back(-1.7738);
+            w.push_back(-1.9605);
+            w.push_back(14.1931);
+            w.push_back(2.9158);
+            w.push_back(1.9781);
+            w.push_back(15.8770);
+            w.push_back(-8.0447);
+            w.push_back(6.9662);
+            w.push_back(8.3509);
+            w.push_back(-2.4372);
+            w.push_back(2.1567);
+            w.push_back(-11.6584);
+            w.push_back(-11.4795);
+            w.push_back(1.0487);
+            w.push_back(7.2225);
+            w.push_back(25.8549);
+            w.push_back(-6.6689);
+            w.push_back(1.8733);
+            w.push_back(-0.8249);
+            w.push_back(-19.3302);
+            w.push_back(-4.3897);
+            w.push_back(-17.9468);
+        }
+
+        // 真値の初期値
+        vector<Eigen::Matrix<double, 1, 1>> x(N);
+        x[0] << 10.0;
+        //観測値の初期値
+        vector<Eigen::Matrix<double, 1, 1>> y(N);
+        y[0] << h[0](x[0]);
+
+        // 真値と観測値を準備
+        for (size_t k = 1; k < N; ++k) {
+            x[k] << f[0](x[k-1]) + v[k-1];
+            y[k] << h[0](x[k]) + w[k];
+        }
+
+        // 推定値の初期値
+        vector<Eigen::Matrix<double, 1, 1>> x_ = x;
+        x_[0] << 10.0 + 1;
+
+        ekf.SetStateSpaceModelFunction(f);
+        ekf.SetStateSpaceModelCoefficientJacobian(df);
+        ekf.SetObservationFunction(h);
+        ekf.SetObservationFunctionJacobian(dh);
+        ekf.SetSystemMatrix(B);
+        ekf.SetSystemNoiseMatrix(Q);
+        ekf.SetObservationNoiseMatrix(R);
+        ekf.SetInitialStateMatrix(x_[0]);
+        ekf.SetInitialKyobunsanMatrix(P);
+
+        for (int i = 1; i < N; ++i) {
+            x_[i] = ekf.Update(y[i]);
+        }
+
+        FILE *gplot;
+        gplot = popen("gnuplot -persist","w");
+        fprintf(gplot, "plot '-' with lines, '-' with lines\n");
+        for (int i = 0; i < N; ++i) {
+            fprintf(gplot,"%d\t%f\n", i, x[i](0));
+        }
+        fprintf(gplot,"e\n");
+        for (int i = 0; i < N; ++i) {
+            fprintf(gplot,"%d\t%f\n", i, x_[i](0));
+        }
+        fprintf(gplot,"e\n");
+        fflush(gplot);
+        pclose(gplot);
+    }
 
     {
         ExtendedKalmanFilter ekf;
