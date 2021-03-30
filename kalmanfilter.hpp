@@ -113,8 +113,6 @@ public:
 };
 
 class ExtendedKalmanFilter {
-public:
-    typedef std::vector<std::function<double(Eigen::MatrixXd)>> FunctionVector;
 private:
     Eigen::MatrixXd A;
     Eigen::MatrixXd At;
@@ -140,49 +138,11 @@ private:
     Eigen::MatrixXd x_k;
     Eigen::MatrixXd P_k;
 
-    FunctionVector f;
-    FunctionVector h;
-    FunctionVector df;
-    FunctionVector dh;
+    std::function<Eigen::MatrixXd(Eigen::MatrixXd)> f;
+    std::function<Eigen::MatrixXd(Eigen::MatrixXd)> h;
+    std::function<Eigen::MatrixXd(Eigen::MatrixXd)> df;
+    std::function<Eigen::MatrixXd(Eigen::MatrixXd)> dh;
 
-    Eigen::MatrixXd F(Eigen::MatrixXd x) {
-        Eigen::MatrixXd y = Eigen::MatrixXd::Zero(x.rows(), x.cols());
-        for (size_t i = 0; i < f.size(); ++i) {
-            y(i) = f[i](x);
-        }
-        return y;
-    }
-    Eigen::MatrixXd H(Eigen::MatrixXd x) {
-        Eigen::MatrixXd y = Eigen::MatrixXd::Zero(h.size(), 1);
-        for (size_t i = 0; i < h.size(); ++i) {
-            y(i) = h[i](x);
-        }
-        return y;
-    }
-    Eigen::MatrixXd Calcx_kk1() {
-        for (int i = 0; i < f.size(); ++i) {
-            x_kk1(i) = f[i](x_k1);
-        }
-        return x_kk1;
-    }
-    Eigen::MatrixXd CalcA() {
-        for (int row = 0; row < A.rows(); ++row) {
-            for (int col = 0; col < A.cols(); ++col) {
-                A(row, col) = df[row * A.cols() + col](x_kk1);
-            }
-        }
-        At = A.transpose();
-        return A;
-    }
-    Eigen::MatrixXd CalcC() {
-        for (int row = 0; row < C.rows(); ++row) {
-            for (int col = 0; col < C.cols(); ++col) {
-                C(row, col) = dh[row * C.cols() + col](x_kk1);
-            }
-        }
-        Ct = C.transpose();
-        return C;
-    }
 public:
     ExtendedKalmanFilter() {}
     ExtendedKalmanFilter(const ExtendedKalmanFilter &obj) {
@@ -207,22 +167,19 @@ public:
         df    = obj.df;
         dh    = obj.dh;
     }
-    FunctionVector SetStateSpaceModelFunction(FunctionVector non_liner_state_function) {
+    std::function<Eigen::MatrixXd(Eigen::MatrixXd)> SetStateSpaceModelFunction(std::function<Eigen::MatrixXd(Eigen::MatrixXd)> non_liner_state_function) {
         f = non_liner_state_function;
-        A.resize(f.size(), f.size());
-        I = Eigen::MatrixXd::Identity(A.rows(), A.cols());
         return f;
     }
-    FunctionVector SetObservationFunction(FunctionVector non_liner_obsevation_function) {
+    std::function<Eigen::MatrixXd(Eigen::MatrixXd)> SetObservationFunction(std::function<Eigen::MatrixXd(Eigen::MatrixXd)> non_liner_obsevation_function) {
         h = non_liner_obsevation_function;
-        C.resize(h.size(), f.size());
         return h;
     }
-    FunctionVector SetStateSpaceModelCoefficientJacobian(FunctionVector state_space_model_coefficient_jacobian) {
+    std::function<Eigen::MatrixXd(Eigen::MatrixXd)> SetStateSpaceModelCoefficientJacobian(std::function<Eigen::MatrixXd(Eigen::MatrixXd)> state_space_model_coefficient_jacobian) {
         df = state_space_model_coefficient_jacobian;
         return df;
     }
-    FunctionVector SetObservationFunctionJacobian(FunctionVector obsevation_jacobian) {
+    std::function<Eigen::MatrixXd(Eigen::MatrixXd)> SetObservationFunctionJacobian(std::function<Eigen::MatrixXd(Eigen::MatrixXd)> obsevation_jacobian) {
         dh = obsevation_jacobian;
         return dh;
     }
@@ -245,6 +202,7 @@ public:
         return R;
     }
     Eigen::MatrixXd SetInitialStateMatrix(Eigen::MatrixXd initial_state_matrix) {
+        I = Eigen::MatrixXd::Identity(initial_state_matrix.rows(), initial_state_matrix.rows());
         x_k1 = initial_state_matrix;
         x_kk1 = x_k1;
         return x_k1;
@@ -254,9 +212,9 @@ public:
         return P_k1;
     }
     Eigen::MatrixXd PredictStep() {
-        Calcx_kk1();
-        CalcA();
-        CalcC();
+        x_kk1 = f(x_k1);
+        A = df(x_kk1); At = A.transpose();
+        C = dh(x_kk1); Ct = C.transpose();
         P_kk1 = A * P_k1 * At + B * Q * Bt;
 
         x_k1 = x_kk1;
@@ -266,7 +224,7 @@ public:
     }
     Eigen::MatrixXd FilteringStep(Eigen::MatrixXd obsevation_data) {
         G = P_kk1 * Ct * ((C * P_kk1 * Ct) + R).inverse();
-        x_k = x_kk1 + G * (obsevation_data - H(x_kk1));
+        x_k = x_kk1 + G * (obsevation_data - h(x_kk1));
         P_k = (I - G * C) * P_kk1;
 
         x_k1 = x_k;
@@ -281,10 +239,6 @@ public:
     }
     void Print() {
         std::cout << "updateing" << std::endl;
-        std::cout << "f.size() " << f.size() << std::endl << std::endl;
-        std::cout << "h.size() " << h.size() << std::endl << std::endl;
-        std::cout << "df.size() " << df.size() << std::endl << std::endl;
-        std::cout << "dh.size() " << dh.size() << std::endl << std::endl;
         std::cout << "B " << std::endl << B << std::endl << std::endl;
         std::cout << "Bt " << std::endl << Bt << std::endl << std::endl;
         std::cout << "Q " << std::endl << Q << std::endl << std::endl;
@@ -302,16 +256,16 @@ public:
         std::cout << "P_k " << std::endl << P_k << std::endl << std::endl;
     }
 
-    auto Setf(FunctionVector non_liner_state_function) {
+    auto Setf(std::function<Eigen::MatrixXd(Eigen::MatrixXd)> non_liner_state_function) {
         return SetStateSpaceModelFunction(non_liner_state_function);
     }
-    auto Setdf(FunctionVector non_liner_obsevation_function) {
+    auto Seth(std::function<Eigen::MatrixXd(Eigen::MatrixXd)> non_liner_obsevation_function) {
         return SetObservationFunction(non_liner_obsevation_function);
     }
-    auto Seth(FunctionVector state_space_model_coefficient_jacobian) {
+    auto Setdf(std::function<Eigen::MatrixXd(Eigen::MatrixXd)> state_space_model_coefficient_jacobian) {
         return SetStateSpaceModelCoefficientJacobian(state_space_model_coefficient_jacobian);
     }
-    auto Setdh(FunctionVector obsevation_jacobian) {
+    auto Setdh(std::function<Eigen::MatrixXd(Eigen::MatrixXd)> obsevation_jacobian) {
         return SetObservationFunctionJacobian(obsevation_jacobian);
     }
     auto SetB(Eigen::MatrixXd system_matrix) {
@@ -334,11 +288,7 @@ public:
     }
 };
 
-
-
 class UnscentedKalmanFilter {
-public:
-    typedef std::vector<std::function<double(Eigen::MatrixXd)>> FunctionVector;
 private:
     Eigen::MatrixXd A;
     Eigen::MatrixXd At;
@@ -366,49 +316,9 @@ private:
     Eigen::MatrixXd x_k;
     Eigen::MatrixXd P_k;
 
-    FunctionVector f;
-    FunctionVector h;
-    FunctionVector df;
-    FunctionVector dh;
+    std::function<Eigen::MatrixXd(Eigen::MatrixXd)> f;
+    std::function<Eigen::MatrixXd(Eigen::MatrixXd)> h;
 
-    Eigen::MatrixXd Calcx_kk1() {
-        for (int i = 0; i < f.size(); ++i) {
-            x_kk1(i) = f[i](x_k1);
-        }
-        return x_kk1;
-    }
-    Eigen::MatrixXd CalcA() {
-        for (int row = 0; row < A.rows(); ++row) {
-            for (int col = 0; col < A.cols(); ++col) {
-                A(row, col) = df[row * A.cols() + col](x_kk1);
-            }
-        }
-        At = A.transpose();
-        return A;
-    }
-    Eigen::MatrixXd CalcC() {
-        for (int row = 0; row < C.rows(); ++row) {
-            for (int col = 0; col < C.cols(); ++col) {
-                C(row, col) = dh[row * C.cols() + col](x_kk1);
-            }
-        }
-        Ct = C.transpose();
-        return C;
-    }
-    Eigen::MatrixXd F(Eigen::MatrixXd x) {
-        Eigen::MatrixXd y = Eigen::MatrixXd::Zero(x.rows(), x.cols());
-        for (size_t i = 0; i < f.size(); ++i) {
-            y(i) = f[i](x);
-        }
-        return y;
-    }
-    Eigen::MatrixXd H(Eigen::MatrixXd x) {
-        Eigen::MatrixXd y = Eigen::MatrixXd::Zero(h.size(), 1);
-        for (size_t i = 0; i < h.size(); ++i) {
-            y(i) = h[i](x);
-        }
-        return y;
-    }
     std::vector<Eigen::MatrixXd> GetSigmaPoints(Eigen::MatrixXd x, Eigen::MatrixXd P, double k) {
         std::vector<Eigen::MatrixXd> X(2*n + 1);
         Eigen::MatrixXd sqrtP = P.llt().matrixL();
@@ -431,14 +341,14 @@ private:
     std::vector<Eigen::MatrixXd> TransformSigmaPointsF(std::vector<Eigen::MatrixXd> X) {
         std::vector<Eigen::MatrixXd> Y(X.size());
         for (size_t i = 0; i < X.size(); ++i) {
-            Y[i] = F(X[i]);
+            Y[i] = f(X[i]);
         }
         return Y;
     }
     std::vector<Eigen::MatrixXd> TransformSigmaPointsH(std::vector<Eigen::MatrixXd> X) {
         std::vector<Eigen::MatrixXd> Y(X.size());
         for (size_t i = 0; i < X.size(); ++i) {
-            Y[i] = H(X[i]);
+            Y[i] = h(X[i]);
         }
         return Y;
     }
@@ -479,32 +389,18 @@ public:
         P_k   = obj.P_k;
         f     = obj.f;
         h     = obj.h;
-        df    = obj.df;
-        dh    = obj.dh;
     }
     double Setk(double scaling_parameter) {
         k = scaling_parameter;
         return k;
     }
-    FunctionVector SetStateSpaceModelFunction(FunctionVector non_liner_state_function) {
+    std::function<Eigen::MatrixXd(Eigen::MatrixXd)> SetStateSpaceModelFunction(std::function<Eigen::MatrixXd(Eigen::MatrixXd)> non_liner_state_function) {
         f = non_liner_state_function;
-        A.resize(f.size(), f.size());
-        I = Eigen::MatrixXd::Identity(A.rows(), A.cols());
-        n = f.size();
         return f;
     }
-    FunctionVector SetObservationFunction(FunctionVector non_liner_obsevation_function) {
+    std::function<Eigen::MatrixXd(Eigen::MatrixXd)> SetObservationFunction(std::function<Eigen::MatrixXd(Eigen::MatrixXd)> non_liner_obsevation_function) {
         h = non_liner_obsevation_function;
-        C.resize(h.size(), f.size());
         return h;
-    }
-    FunctionVector SetStateSpaceModelCoefficientJacobian(FunctionVector state_space_model_coefficient_jacobian) {
-        df = state_space_model_coefficient_jacobian;
-        return df;
-    }
-    FunctionVector SetObservationFunctionJacobian(FunctionVector obsevation_jacobian) {
-        dh = obsevation_jacobian;
-        return dh;
     }
     Eigen::MatrixXd SetSystemMatrix(Eigen::MatrixXd system_matrix) {
         B = system_matrix;
@@ -515,16 +411,13 @@ public:
         Q = system_noise_matrix;
         return Q;
     }
-    Eigen::MatrixXd SetObservationJacobian(Eigen::MatrixXd observation_jacobian) {
-        C = observation_jacobian;
-        Ct = C.transpose();
-        return C;
-    }
     Eigen::MatrixXd SetObservationNoiseMatrix(Eigen::MatrixXd observation_noise_matrix) {
         R = observation_noise_matrix;
         return R;
     }
     Eigen::MatrixXd SetInitialStateMatrix(Eigen::MatrixXd initial_state_matrix) {
+        I = Eigen::MatrixXd::Identity(initial_state_matrix.rows(), initial_state_matrix.rows());
+        n = initial_state_matrix.rows();
         x_k1 = initial_state_matrix;
         x_kk1 = x_k1;
         return x_k1;
@@ -536,7 +429,6 @@ public:
     Eigen::MatrixXd Update(Eigen::MatrixXd obsevation_data){
         auto X = GetSigmaPoints(x_k1, P_k1, k);
         auto w = GetWeights(k);
-
         auto X_ = TransformSigmaPointsF(X);
         x_kk1 = GetTransformedAverage(w, X_);
         P_kk1 = GetTransformedVarianceCovarianceMatrix(w, X_, x_kk1, X_, x_kk1) + B * Q * Bt;
@@ -557,10 +449,6 @@ public:
     }
     void Print() {
         std::cout << "updateing" << std::endl;
-        std::cout << "f.size() " << f.size() << std::endl << std::endl;
-        std::cout << "h.size() " << h.size() << std::endl << std::endl;
-        std::cout << "df.size() " << df.size() << std::endl << std::endl;
-        std::cout << "dh.size() " << dh.size() << std::endl << std::endl;
         std::cout << "B " << std::endl << B << std::endl << std::endl;
         std::cout << "Bt " << std::endl << Bt << std::endl << std::endl;
         std::cout << "Q " << std::endl << Q << std::endl << std::endl;
@@ -578,26 +466,17 @@ public:
         std::cout << "P_k " << std::endl << P_k << std::endl << std::endl;
     }
 
-    auto Setf(FunctionVector non_liner_state_function) {
+    auto Setf(std::function<Eigen::MatrixXd(Eigen::MatrixXd)> non_liner_state_function) {
         return SetStateSpaceModelFunction(non_liner_state_function);
     }
-    auto Setdf(FunctionVector non_liner_obsevation_function) {
+    auto Seth(std::function<Eigen::MatrixXd(Eigen::MatrixXd)> non_liner_obsevation_function) {
         return SetObservationFunction(non_liner_obsevation_function);
-    }
-    auto Seth(FunctionVector state_space_model_coefficient_jacobian) {
-        return SetStateSpaceModelCoefficientJacobian(state_space_model_coefficient_jacobian);
-    }
-    auto Setdh(FunctionVector obsevation_jacobian) {
-        return SetObservationFunctionJacobian(obsevation_jacobian);
     }
     auto SetB(Eigen::MatrixXd system_matrix) {
         return SetSystemMatrix(system_matrix);
     }
     auto SetQ(Eigen::MatrixXd system_noise_matrix) {
         return SetSystemNoiseMatrix(system_noise_matrix);
-    }
-    auto SetC(Eigen::MatrixXd observation_jacobian) {
-        return SetObservationJacobian(observation_jacobian);
     }
     auto SetR(Eigen::MatrixXd observation_noise_matrix) {
         return SetObservationNoiseMatrix(observation_noise_matrix);

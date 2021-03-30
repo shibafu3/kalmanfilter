@@ -79,14 +79,26 @@ int main() {
     {
         ExtendedKalmanFilter ekf;
 
-        std::vector<std::function<double(Eigen::MatrixXd)>> f(1);
-        f[0] = [](Eigen::MatrixXd x) -> double { return  x(0) + 3.0*cos(x(0)/10.0); };
-        ExtendedKalmanFilter::FunctionVector df(1);
-        df[0] = [](Eigen::MatrixXd x) -> double { return 1 - 3.0/10.0*sin(x(0)/10.0); };
-        ExtendedKalmanFilter::FunctionVector h(1);
-        h[0] = [](Eigen::MatrixXd x) -> double { return x(0)*x(0)*x(0); };
-        ExtendedKalmanFilter::FunctionVector dh(1);
-        dh[0] = [](Eigen::MatrixXd x) -> double { return 3.0*x(0)*x(0); };
+        std::function<Eigen::MatrixXd(Eigen::MatrixXd)> f = [](Eigen::MatrixXd x) -> Eigen::MatrixXd {
+            Eigen::MatrixXd fx = Eigen::MatrixXd::Zero(x.rows(), x.cols());
+            fx(0) = x(0) + 3.0*cos(x(0)/10.0);
+            return fx;
+        };
+        std::function<Eigen::MatrixXd(Eigen::MatrixXd)> df = [](Eigen::MatrixXd x) -> Eigen::MatrixXd {
+            Eigen::MatrixXd dfx = Eigen::MatrixXd::Zero(x.rows(), x.cols());
+            dfx(0) = 1 - 3.0/10.0*sin(x(0)/10.0);
+            return dfx;
+        };
+        std::function<Eigen::MatrixXd(Eigen::MatrixXd)> h = [](Eigen::MatrixXd x) -> Eigen::MatrixXd {
+            Eigen::MatrixXd hx = Eigen::MatrixXd::Zero(x.rows(), x.cols());
+            hx(0) = x(0)*x(0)*x(0);
+            return hx;
+        };
+        std::function<Eigen::MatrixXd(Eigen::MatrixXd)> dh = [](Eigen::MatrixXd x) -> Eigen::MatrixXd {
+            Eigen::MatrixXd dhx = Eigen::MatrixXd::Zero(x.rows(), x.cols());
+            dhx(0) = 3.0*x(0)*x(0);
+            return dhx;
+        };
 
         // サンプル数
         double N = 50;
@@ -214,12 +226,12 @@ int main() {
         x[0] << 10.0;
         //観測値の初期値
         vector<Eigen::Matrix<double, 1, 1>> y(N);
-        y[0] << h[0](x[0]);
+        y[0] << h(x[0]);
 
         // 真値と観測値を準備
         for (size_t k = 1; k < N; ++k) {
-            x[k] << f[0](x[k-1]) + v[k-1];
-            y[k] << h[0](x[k]) + w[k];
+            x[k] << f(x[k-1])(0) + v[k-1];
+            y[k] << h(x[k])(0) + w[k];
         }
 
         // 推定値の初期値
@@ -261,14 +273,26 @@ int main() {
         Eigen::Matrix<double, 1, 1> x;
         x << 5;
 
-        std::vector<std::function<double(Eigen::MatrixXd)>> f(1);
-        f[0] = [](Eigen::MatrixXd x) -> double { return  x(0) + 5*std::sin(0.1*x(0))*std::sin(0.1*x(0)); };
-        ExtendedKalmanFilter::FunctionVector df(f.size() * x.size());
-        df[0] = [](Eigen::MatrixXd x) -> double { return 1 + 5.0*2.0*0.1*cos(0.1*x(0)); };
-        ExtendedKalmanFilter::FunctionVector h(1);
-        h[0] = [](Eigen::MatrixXd x) -> double { return x(0); };
-        ExtendedKalmanFilter::FunctionVector dh(h.size() * x.size());
-        dh[0] = [](Eigen::MatrixXd x) -> double { return 1; };
+        std::function<Eigen::MatrixXd(Eigen::MatrixXd)> f = [&](Eigen::MatrixXd x) -> Eigen::MatrixXd {
+            Eigen::MatrixXd fx = Eigen::MatrixXd::Zero(1, 1);
+            fx(0) = x(0) + 5*std::sin(0.1*x(0))*std::sin(0.1*x(0));
+            return fx;
+        };
+        std::function<Eigen::MatrixXd(Eigen::MatrixXd)> df = [&](Eigen::MatrixXd x) -> Eigen::MatrixXd {
+            Eigen::MatrixXd dfx = Eigen::MatrixXd::Zero(1, 1);
+            dfx(0) = 1 + 5.0*2.0*0.1*cos(0.1*x(0));
+            return dfx;
+        };
+        std::function<Eigen::MatrixXd(Eigen::MatrixXd)> h = [&](Eigen::MatrixXd x) -> Eigen::MatrixXd {
+            Eigen::MatrixXd hx = Eigen::MatrixXd::Zero(1, 1);
+            hx(0) = x(0);
+            return hx;
+        };
+        std::function<Eigen::MatrixXd(Eigen::MatrixXd)> dh = [&](Eigen::MatrixXd x) -> Eigen::MatrixXd {
+            Eigen::MatrixXd dhx = Eigen::MatrixXd::Zero(1, 1);
+            dhx(0) = 1;
+            return dhx;
+        };
 
         Eigen::Matrix<double, 1, 1> B;
         B << 1.0;
@@ -339,12 +363,18 @@ int main() {
         double N = EndTime/T+1;
         double n = 3;
 
-        std::vector<std::function<double(Eigen::MatrixXd)>> f(3);
-        f[0] = [&](Eigen::MatrixXd x) -> double { return x(0)+T*x(1); };
-        f[1] = [&](Eigen::MatrixXd x) -> double { return x(1)+T*(0.5*rho*exp(-x(0)/eta)*x(1)*x(1)*x(2)-g); };
-        f[2] = [&](Eigen::MatrixXd x) -> double { return x(2); };
-        ExtendedKalmanFilter::FunctionVector h(1);
-        h[0] = [&](Eigen::MatrixXd x) -> double { return sqrt(M*M+(x(0)-a)*(x(0)-a)); };
+        std::function<Eigen::MatrixXd(Eigen::MatrixXd)> f = [&](Eigen::MatrixXd x) -> Eigen::MatrixXd {
+            Eigen::MatrixXd fx = Eigen::MatrixXd::Zero(3, 1);
+            fx(0) = x(0)+T*x(1);
+            fx(1) = x(1)+T*(0.5*rho*exp(-x(0)/eta)*x(1)*x(1)*x(2)-g);
+            fx(2) = x(2);
+            return fx;
+        };
+        std::function<Eigen::MatrixXd(Eigen::MatrixXd)> h = [&](Eigen::MatrixXd x) -> Eigen::MatrixXd {
+            Eigen::MatrixXd hx = Eigen::MatrixXd::Zero(1, 1);
+            hx(0) = sqrt(M*M+(x(0)-a)*(x(0)-a));
+            return hx;
+        };
 
         Eigen::Matrix<double, 3, 1> B;
         B << 0.0,
@@ -436,13 +466,11 @@ int main() {
                 -6000,
                 0.003;
         vector<Eigen::Matrix<double, 1, 1>> y(N);
-        y[0] << h[0](x[0]) + w[0];
+        y[0] << h(x[0])(0) + w[0];
 
         for (size_t k = 1; k < N; ++k) {
-            x[k] << f[0](x[k-1]),
-                    f[1](x[k-1]),
-                    f[2](x[k-1]);
-            y[k] << h[0](x[k]) + w[k];
+            x[k] = f(x[k-1]);
+            y[k] << h(x[k])(0) + w[k];
         }
         vector<Eigen::Matrix<double, 3, 1>> x_ = x;
 
@@ -499,4 +527,5 @@ int main() {
         fflush(gplot);
         pclose(gplot);
     }
+
 }
