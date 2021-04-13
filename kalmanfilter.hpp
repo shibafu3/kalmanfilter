@@ -316,6 +316,14 @@ private:
     Eigen::MatrixXd x_k;
     Eigen::MatrixXd P_k;
 
+    std::vector<double> w;
+    std::vector<Eigen::MatrixXd> X;
+    std::vector<Eigen::MatrixXd> X_;
+    std::vector<Eigen::MatrixXd> Y_;
+    Eigen::MatrixXd y_;
+    Eigen::MatrixXd Pyy_;
+    Eigen::MatrixXd Pxy_;
+
     std::function<Eigen::MatrixXd(Eigen::MatrixXd)> f;
     std::function<Eigen::MatrixXd(Eigen::MatrixXd)> h;
 
@@ -426,26 +434,39 @@ public:
         P_k1 = initial_kyobunsan_matrix;
         return P_k1;
     }
-    Eigen::MatrixXd Update(Eigen::MatrixXd obsevation_data){
-        auto X = GetSigmaPoints(x_k1, P_k1, k);
-        auto w = GetWeights(k);
-        auto X_ = TransformSigmaPointsF(X);
+    Eigen::MatrixXd PredictStep(){
+        X = GetSigmaPoints(x_k1, P_k1, k);
+        w = GetWeights(k);
+        X_ = TransformSigmaPointsF(X);
         x_kk1 = GetTransformedAverage(w, X_);
         P_kk1 = GetTransformedVarianceCovarianceMatrix(w, X_, x_kk1, X_, x_kk1) + B * Q * Bt;
 
-        X_ = GetSigmaPoints(x_kk1, P_kk1, k);
-        auto Y_ = TransformSigmaPointsH(X_);
-        auto y_ = GetTransformedAverage(w, Y_);
-        auto Pyy_ = GetTransformedVarianceCovarianceMatrix(w, Y_, y_, Y_, y_);
-        auto Pxy_ = GetTransformedVarianceCovarianceMatrix(w, X_, x_kk1, Y_, y_);
+        x_k1 = x_kk1;
+        P_k1 = P_kk1;
 
-        auto g = Pxy_ * (Pyy_ + R).inverse();
-        x_k = x_kk1 + g * (obsevation_data - y_);
-        P_k = P_kk1 - g * Pxy_.transpose();
+        return x_k1;
+    }
+    Eigen::MatrixXd FilteringStep(Eigen::MatrixXd obsevation_data){
+        X_ = GetSigmaPoints(x_kk1, P_kk1, k);
+        Y_ = TransformSigmaPointsH(X_);
+        y_ = GetTransformedAverage(w, Y_);
+        Pyy_ = GetTransformedVarianceCovarianceMatrix(w, Y_, y_, Y_, y_);
+        Pxy_ = GetTransformedVarianceCovarianceMatrix(w, X_, x_kk1, Y_, y_);
+
+        G = Pxy_ * (Pyy_ + R).inverse();
+        x_k = x_kk1 + G * (obsevation_data - y_);
+        P_k = P_kk1 - G * Pxy_.transpose();
+
         x_k1 = x_k;
         P_k1 = P_k;
 
-        return x_k;
+        return x_k1;
+    }
+    Eigen::MatrixXd Update(Eigen::MatrixXd obsevation_data){
+        PredictStep();
+        FilteringStep(obsevation_data);
+
+        return x_k1;
     }
     void Print() {
         std::cout << "updateing" << std::endl;
