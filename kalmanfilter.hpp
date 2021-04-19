@@ -256,34 +256,34 @@ public:
         std::cout << "P_k " << std::endl << P_k << std::endl << std::endl;
     }
 
-    auto Setf(std::function<Eigen::MatrixXd(Eigen::MatrixXd)> non_liner_state_function) {
+    std::function<Eigen::MatrixXd(Eigen::MatrixXd)> Setf(std::function<Eigen::MatrixXd(Eigen::MatrixXd)> non_liner_state_function) {
         return SetStateSpaceModelFunction(non_liner_state_function);
     }
-    auto Seth(std::function<Eigen::MatrixXd(Eigen::MatrixXd)> non_liner_obsevation_function) {
+    std::function<Eigen::MatrixXd(Eigen::MatrixXd)> Seth(std::function<Eigen::MatrixXd(Eigen::MatrixXd)> non_liner_obsevation_function) {
         return SetObservationFunction(non_liner_obsevation_function);
     }
-    auto Setdf(std::function<Eigen::MatrixXd(Eigen::MatrixXd)> state_space_model_coefficient_jacobian) {
+    std::function<Eigen::MatrixXd(Eigen::MatrixXd)> Setdf(std::function<Eigen::MatrixXd(Eigen::MatrixXd)> state_space_model_coefficient_jacobian) {
         return SetStateSpaceModelCoefficientJacobian(state_space_model_coefficient_jacobian);
     }
-    auto Setdh(std::function<Eigen::MatrixXd(Eigen::MatrixXd)> obsevation_jacobian) {
+    std::function<Eigen::MatrixXd(Eigen::MatrixXd)> Setdh(std::function<Eigen::MatrixXd(Eigen::MatrixXd)> obsevation_jacobian) {
         return SetObservationFunctionJacobian(obsevation_jacobian);
     }
-    auto SetB(Eigen::MatrixXd system_matrix) {
+    Eigen::MatrixXd SetB(Eigen::MatrixXd system_matrix) {
         return SetSystemMatrix(system_matrix);
     }
-    auto SetQ(Eigen::MatrixXd system_noise_matrix) {
+    Eigen::MatrixXd SetQ(Eigen::MatrixXd system_noise_matrix) {
         return SetSystemNoiseMatrix(system_noise_matrix);
     }
-    auto SetC(Eigen::MatrixXd observation_jacobian) {
+    Eigen::MatrixXd SetC(Eigen::MatrixXd observation_jacobian) {
         return SetObservationJacobian(observation_jacobian);
     }
-    auto SetR(Eigen::MatrixXd observation_noise_matrix) {
+    Eigen::MatrixXd SetR(Eigen::MatrixXd observation_noise_matrix) {
         return SetObservationNoiseMatrix(observation_noise_matrix);
     }
-    auto Setx(Eigen::MatrixXd initial_state_matrix) {
+    Eigen::MatrixXd Setx(Eigen::MatrixXd initial_state_matrix) {
         return SetInitialStateMatrix(initial_state_matrix);
     }
-    auto SetP(Eigen::MatrixXd initial_kyobunsan_matrix) {
+    Eigen::MatrixXd SetP(Eigen::MatrixXd initial_kyobunsan_matrix) {
         return SetInitialKyobunsanMatrix(initial_kyobunsan_matrix);
     }
 };
@@ -487,25 +487,25 @@ public:
         std::cout << "P_k " << std::endl << P_k << std::endl << std::endl;
     }
 
-    auto Setf(std::function<Eigen::MatrixXd(Eigen::MatrixXd)> non_liner_state_function) {
+    std::function<Eigen::MatrixXd(Eigen::MatrixXd)> Setf(std::function<Eigen::MatrixXd(Eigen::MatrixXd)> non_liner_state_function) {
         return SetStateSpaceModelFunction(non_liner_state_function);
     }
-    auto Seth(std::function<Eigen::MatrixXd(Eigen::MatrixXd)> non_liner_obsevation_function) {
+    std::function<Eigen::MatrixXd(Eigen::MatrixXd)> Seth(std::function<Eigen::MatrixXd(Eigen::MatrixXd)> non_liner_obsevation_function) {
         return SetObservationFunction(non_liner_obsevation_function);
     }
-    auto SetB(Eigen::MatrixXd system_matrix) {
+    Eigen::MatrixXd SetB(Eigen::MatrixXd system_matrix) {
         return SetSystemMatrix(system_matrix);
     }
-    auto SetQ(Eigen::MatrixXd system_noise_matrix) {
+    Eigen::MatrixXd SetQ(Eigen::MatrixXd system_noise_matrix) {
         return SetSystemNoiseMatrix(system_noise_matrix);
     }
-    auto SetR(Eigen::MatrixXd observation_noise_matrix) {
+    Eigen::MatrixXd SetR(Eigen::MatrixXd observation_noise_matrix) {
         return SetObservationNoiseMatrix(observation_noise_matrix);
     }
-    auto Setx(Eigen::MatrixXd initial_state_matrix) {
+    Eigen::MatrixXd Setx(Eigen::MatrixXd initial_state_matrix) {
         return SetInitialStateMatrix(initial_state_matrix);
     }
-    auto SetP(Eigen::MatrixXd initial_kyobunsan_matrix) {
+    Eigen::MatrixXd SetP(Eigen::MatrixXd initial_kyobunsan_matrix) {
         return SetInitialKyobunsanMatrix(initial_kyobunsan_matrix);
     }
 };
