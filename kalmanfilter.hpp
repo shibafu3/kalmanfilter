@@ -213,7 +213,7 @@ public:
     }
     Eigen::MatrixXd PredictStep() {
         x_kk1 = f(x_k1);
-        A = df(x_kk1); At = A.transpose();
+        A = df(x_k1); At = A.transpose();
         C = dh(x_kk1); Ct = C.transpose();
         P_kk1 = A * P_k1 * At + B * Q * Bt;
 
