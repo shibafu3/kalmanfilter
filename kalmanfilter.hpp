@@ -214,7 +214,6 @@ public:
     Eigen::MatrixXd PredictStep() {
         x_kk1 = f(x_k1);
         A = df(x_k1); At = A.transpose();
-        C = dh(x_kk1); Ct = C.transpose();
         P_kk1 = A * P_k1 * At + B * Q * Bt;
 
         x_k1 = x_kk1;
@@ -223,6 +222,7 @@ public:
         return x_k1;
     }
     Eigen::MatrixXd FilteringStep(Eigen::MatrixXd obsevation_data) {
+        C = dh(x_kk1); Ct = C.transpose();
         G = P_kk1 * Ct * ((C * P_kk1 * Ct) + R).inverse();
         x_k = x_kk1 + G * (obsevation_data - h(x_kk1));
         P_k = (I - G * C) * P_kk1;
