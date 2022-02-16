@@ -86,7 +86,7 @@ public:
         P_k1 = initial_kyobunsan_matrix;
         return P_k1;
     }
-    Eigen::Vector3d PredictStep() {
+    Eigen::MatrixXd PredictStep() {
         x_kk1 = A * x_k1;
         P_kk1 = A * P_k1 * At + B * Q * Bt;
 
@@ -95,7 +95,7 @@ public:
 
         return x_k1;
     }
-    Eigen::Vector3d FilteringStep(Eigen::MatrixXd obsevation_data) {
+    Eigen::MatrixXd FilteringStep(Eigen::MatrixXd obsevation_data) {
         G = P_kk1 * Ct * ((C * P_kk1 * Ct) + R).inverse();
         x_k = x_kk1 + G * (obsevation_data - (C * x_kk1));
         P_k = (I - G * C) * P_kk1;
@@ -105,7 +105,7 @@ public:
 
         return x_k1;
     }
-    Eigen::Vector3d Update(Eigen::MatrixXd obsevation_data) {
+    Eigen::MatrixXd Update(Eigen::MatrixXd obsevation_data) {
         PredictStep();
         FilteringStep(obsevation_data);
         return x_k1;
