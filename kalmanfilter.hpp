@@ -82,8 +82,8 @@ public:
         x_k1 = initial_state_matrix;
         return x_k1;
     }
-    Eigen::MatrixXd SetInitialKyobunsanMatrix(Eigen::MatrixXd initial_kyobunsan_matrix) {
-        P_k1 = initial_kyobunsan_matrix;
+    Eigen::MatrixXd SetInitialCovarianceMatrix(Eigen::MatrixXd initial_covariance_matrix) {
+        P_k1 = initial_covariance_matrix;
         return P_k1;
     }
     Eigen::MatrixXd PredictStep() {
@@ -207,8 +207,8 @@ public:
         x_kk1 = x_k1;
         return x_k1;
     }
-    Eigen::MatrixXd SetInitialKyobunsanMatrix(Eigen::MatrixXd initial_kyobunsan_matrix) {
-        P_k1 = initial_kyobunsan_matrix;
+    Eigen::MatrixXd SetInitialCovarianceMatrix(Eigen::MatrixXd initial_covariance_matrix) {
+        P_k1 = initial_covariance_matrix;
         return P_k1;
     }
     Eigen::MatrixXd PredictStep() {
@@ -283,8 +283,8 @@ public:
     Eigen::MatrixXd Setx(Eigen::MatrixXd initial_state_matrix) {
         return SetInitialStateMatrix(initial_state_matrix);
     }
-    Eigen::MatrixXd SetP(Eigen::MatrixXd initial_kyobunsan_matrix) {
-        return SetInitialKyobunsanMatrix(initial_kyobunsan_matrix);
+    Eigen::MatrixXd SetP(Eigen::MatrixXd initial_covariance_matrix) {
+        return SetInitialCovarianceMatrix(initial_covariance_matrix);
     }
 };
 
@@ -430,8 +430,8 @@ public:
         x_kk1 = x_k1;
         return x_k1;
     }
-    Eigen::MatrixXd SetInitialKyobunsanMatrix(Eigen::MatrixXd initial_kyobunsan_matrix) {
-        P_k1 = initial_kyobunsan_matrix;
+    Eigen::MatrixXd SetInitialCovarianceMatrix(Eigen::MatrixXd initial_covariance_matrix) {
+        P_k1 = initial_covariance_matrix;
         return P_k1;
     }
     Eigen::MatrixXd PredictStep(){
@@ -505,8 +505,8 @@ public:
     Eigen::MatrixXd Setx(Eigen::MatrixXd initial_state_matrix) {
         return SetInitialStateMatrix(initial_state_matrix);
     }
-    Eigen::MatrixXd SetP(Eigen::MatrixXd initial_kyobunsan_matrix) {
-        return SetInitialKyobunsanMatrix(initial_kyobunsan_matrix);
+    Eigen::MatrixXd SetP(Eigen::MatrixXd initial_covariance_matrix) {
+        return SetInitialCovarianceMatrix(initial_covariance_matrix);
     }
 };
 
